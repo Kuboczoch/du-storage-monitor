@@ -1,35 +1,76 @@
-local maxWidth = 46.5
+local _MAX_WIDTH_ = 46.5
 
-local oreType = { [1] = "Cobaltite", [2] = "Cryolite", [3] = "Kolbeckite", [4] = "Gold nuggets" }
-local oreWeight = { [1] = 6.33, [2] = 2.95, [3] = 2.37, [4] = 19.30 }
-local maxContainerVolume = 153600 --export
+local itemLabel1 = "itemLabel1" --export
+local itemMass1 = (container1 and container1.getItemsMass() or 0)
+local maxInContainer1 = 0 --export
+local itemDensity1 = 0 --export
+
+local itemLabel2 = "itemLabel2" --export
+local itemMass2 = (container2 and container2.getItemsMass() or 0)
+local maxInContainer2 = 0 --export
+local itemDensity2 = 0 --export
+
+local itemLabel3 = "itemLabel3" --export
+local itemMass3 = (container3 and container3.getItemsMass() or 0)
+local maxInContainer3 = 0 --export
+local itemDensity3 = 0 --export
+
+local itemLabel4 = "itemLabel4" --export
+local itemMass4 = (container4 and container4.getItemsMass() or 0)
+local maxInContainer4 = 0 --export
+local itemDensity4 = 0 --export
+
+local itemsData = {
+    {
+        label = itemLabel1,
+        mass = itemMass1,
+        liters = maxInContainer1,
+        density = itemDensity1
+    },
+    {
+        label = itemLabel2,
+        mass = itemMass2,
+        liters = maxInContainer2,
+        density = itemDensity2
+    },
+    {
+        label = itemLabel3,
+        mass = itemMass3,
+        liters = maxInContainer3,
+        density = itemDensity3
+    },
+    {
+        label = itemLabel4,
+        mass = itemMass4,
+        liters = maxInContainer4,
+        density = itemDensity4
+    }
+}
 
 function round(number, decimal)
     local multiple = 10 ^ (decimal or 0)
     return math.floor(number * multiple + 0.5) / multiple
 end
 
-function convertUnit(oreStock)
-    if oreStock <= 9999 then
-        return oreStock .. " L"
+function convertUnit(volume)
+    if volume <= 9999 then
+        return volume .. " L"
     end
-    if oreStock >= 10000 and oreStock < 1000000 then
-        return math.floor(oreStock / 1000) .. " Kl"
+    if volume >= 10000 and volume < 1000000 then
+        return math.floor(volume / 1000) .. " Kl"
     end
-    if oreStock >= 1000000 then
-        return round(oreStock / 1000000, 2) .. " Ml"
+    if volume >= 1000000 then
+        return round(volume / 1000000, 2) .. " Ml"
     end
 end
 
-function messagePrint(a, b, c, d)
-    if a > 26 and b > 26 and c > 26 and d > 26 then
-        return [[ 0;]]
-    end
-
-    return [[ 1;]]
+function getBarStatus(item)
+    return math.ceil(item.mass / item.density) * _MAX_WIDTH_ / item.liters
 end
 
-function resourcesStatus(percent)
+function getItemStatus(item)
+    local percent = math.ceil((math.ceil(item.mass / item.density) / item.liters) * 100)
+
     if percent <= 25 then
         return [[
             background: rgb(27,0,0);
@@ -50,88 +91,38 @@ function resourcesStatus(percent)
     ]]
 end
 
-function cobaltiteStock(percent)
-    local cobaltiteType = oreType[1] .. ", "
-    local cobaltiteOk = ""
-    if percent <= 25 then
-        return cobaltiteType
-    else
-        return cobaltiteOk
-    end
+function container(item, index)
+    return [[
+        <div class="container">
+            <div class="container container__block--1">
+                <div class="item_container item_container_]] .. index .. [[">
+                    ]] .. item.label .. [[ :
+                </div>
+                <div class="item_container item_container_]] .. index .. [[">
+                    ]] .. convertUnit(item.liters) .. [[
+                </div>
+                <div class="item_container item_container_]] .. index .. [[ item_container_]] .. index .. [[--1">
+                    <div class="progress-bar progress-bar-]] .. index .. [[">
+                        ]] .. math.ceil(((item.mass / item.density) / item.liters) * 100) .. [[ %
+                    </div>
+                </div>
+            </div>
+        </div>
+    ]]
 end
 
-function cryoliteStock(percent)
-    local cryoliteType = oreType[2] .. ", "
-    local cryoliteTypeOk = ""
-    if percent <= 25 then
-        return cryoliteType
-    else
-        return cryoliteTypeOk
-    end
+local dynamicStyle = ""
+
+for i, item in pairs(itemsData) do
+    dynamicStyle = dynamicStyle .. [[
+        .progress-bar-item]] .. i .. [[] {
+            width: ]] .. getBarStatus(item) .. [[vw;
+            ]] .. getItemStatus(item) .. [[
+        }
+    ]]
 end
 
-function kolbeckiteStock(percent)
-    local kolbeckiteType = oreType[3] .. ", "
-    local kolbeckiteOk = ""
-    if percent <= 25 then
-        return kolbeckiteType
-    else
-        return kolbeckiteOk
-    end
-end
-
-function gold_nuggetsStock(percent)
-    local gold_nuggetsType = oreType[4]
-    local gold_nuggetsOk = ""
-    if percent <= 25 then return
-        gold_nuggetsType
-    else
-        return gold_nuggetsOk
-    end
-end
-
--- Container_1
-local containerMass_cobaltite = math.ceil(container_cobaltite.getItemsMass() / oreWeight[1])
-local percentCobaltite = math.ceil((containerMass_cobaltite / maxContainerVolume) * 100)
-local cobaltiteStatus = resourcesStatus(percentCobaltite)
-local cobaltiteFactor = maxWidth / maxContainerVolume
-local cobaltiteBarStatus = containerMass_cobaltite * cobaltiteFactor
-local cobaltiteStockStatus = cobaltiteStock(percentCobaltite)
-local containerVolumeCobaltite = convertUnit(containerMass_cobaltite)
-
--- Container_2
-local containerMass_cryolite = math.ceil(container_cryolite.getItemsMass() / oreWeight[2])
-local percentCryolite = math.ceil((containerMass_cryolite / maxContainerVolume) * 100)
-local cryoliteStatus = resourcesStatus(percentCryolite)
-local cryoliteFactor = maxWidth / maxContainerVolume
-local cryoliteBarStatus = containerMass_cryolite * cryoliteFactor
-local cryoliteStockStatus = cryoliteStock(percentCryolite)
-local containerVolumeCryolite = convertUnit(containerMass_cryolite)
-
--- Container_3
-local containerMass_kolbeckite = math.ceil(container_kolbeckite.getItemsMass() / oreWeight[3])
-local percentKolbeckite = math.ceil((containerMass_kolbeckite / maxContainerVolume) * 100)
-local kolbeckiteStatus = resourcesStatus(percentKolbeckite)
-local kolbeckiteFactor = maxWidth / maxContainerVolume
-local kolbeckiteBarStatus = containerMass_kolbeckite * kolbeckiteFactor
-local kolbeckiteStockStatus = kolbeckiteStock(percentKolbeckite)
-local containerVolumeKolbeckite = convertUnit(containerMass_kolbeckite)
-
--- Container_4
-local containerMass_gold_nuggets = math.ceil(container_gold_nuggets.getItemsMass() / oreWeight[4])
-local percentGold_nuggets = math.ceil((containerMass_gold_nuggets / maxContainerVolume) * 100)
-local gold_nuggetsStatus = resourcesStatus(percentGold_nuggets)
-local gold_nuggetsFactor = maxWidth / maxContainerVolume
-local gold_nuggetsBarStatus = containerMass_gold_nuggets * gold_nuggetsFactor
-local gold_nuggetsStockStatus = gold_nuggetsStock(percentGold_nuggets)
-local containerVolumeGold_nuggets = convertUnit(containerMass_gold_nuggets)
-
-message = messagePrint(percentCobaltite, percentCryolite, percentKolbeckite, percentGold_nuggets)
-
-local view = [[
-<html>
-<head>
-<style>
+local style = [[
 body {
     width: auto;
     background-color: rgba(0, 0, 0, 1);
@@ -141,22 +132,22 @@ em {
     font-weight: bold;
 }
 
-.cobaltite {
+.item1 {
     text-shadow: 0 0vw 0.11vw rgba(146, 220, 226, 0.8);
     color: rgba(146, 220, 226, 0.8);
 }
 
-.cryolite {
+.item2 {
     text-shadow: 0 0vw 0.11vw rgba(175, 170, 165, 0.8);
     color: rgba(175, 170, 165, 0.8);
 }
 
-.kolbeckite {
+.item3 {
     text-shadow: 0 0vw 0.11vw rgba(235, 99, 65, 0.8);
     color: rgba(235, 99, 65, 0.8);
 }
 
-.gold_nuggets {
+.item4 {
     text-shadow: 0 0vw 0.11vw rgba(247, 250, 71, 0.8);
     color: rgba(247, 250, 71, 0.8);
     font-size: 2.58vw;
@@ -171,26 +162,6 @@ em {
     white-space: nowrap;
     height: auto;
     box-shadow: 0 0vw 0.2vw rgba(0, 0, 0, 0.8);
-}
-
-.progress-bar-cobaltite {
-    width: ]] .. cobaltiteBarStatus .. [[vw;
-    ]] .. cobaltiteStatus .. [[
-}
-
-.progress-bar-cryolite {
-    width: ]] .. cryoliteBarStatus .. [[vw;
-    ]] .. cryoliteStatus .. [[
-}
-
-.progress-bar-kolbeckite {
-    width: ]] .. kolbeckiteBarStatus .. [[vw;
-    ]] .. kolbeckiteStatus .. [[
-}
-
-.progress-bar-gold_nuggets {
-    width: ]] .. gold_nuggetsBarStatus .. [[vw;
-    ]] .. gold_nuggetsStatus .. [[
 }
 
 .prime {
@@ -215,16 +186,6 @@ em {
     padding: 0.51vw;
 }
 
-.container_message {
-    opacity:  ]] .. message .. [[ ;
-    text-align: center;
-    width: 100vw;
-    display: inherit flex;
-    align-items: center;
-    padding-right: 2.58vw;
-    padding-top: 2.58vw;
-}
-
 .item_container {
     justify-self: auto;
     padding: 1.03vw;
@@ -233,38 +194,38 @@ em {
     color: white;
 }
 
-.item_container_cobaltite {
+.item_container_item1 {
       background-color: rgba(146, 220, 226, 0.4);
       border: 0.2vw solid rgba(146, 220, 226, 1);
 }
 
-.item_container_cryolite {
+.item_container_item2 {
     background-color: rgba(175, 170, 165, 0.4);
     border: 0.2vw solid rgba(175, 170, 165, 1);
 }
 
-.item_container_kolbeckite {
+.item_container_item3 {
     background-color: rgba(235, 99, 65, 0.4);
     border: 0.2vw solid rgba(235, 99, 65, 1);
 
 }
 
-.item_container_gold_nuggets {
+.item_container_item4 {
     background-color: rgba(247, 250, 71, 0.4);
     border: 0.2vw solid rgba(247, 250, 71, 1);
     font-size: 2.58vw;
 }
 
-.item_container_cobaltite--1 {
+.item_container_item1--1 {
     background-color: rgba(0, 0, 0, 0.4);
 }
-.item_container_cryolite--1 {
+.item_container_item2--1 {
     background-color: rgba(0, 0, 0, 0.4);
 }
-.item_container_kolbeckite--1 {
+.item_container_item3--1 {
     background-color: rgba(0, 0, 0, 0.4);
 }
-.item_container_gold_nuggets--1 {
+.item_container_item4--1 {
     background-color: rgba(0, 0, 0, 0.4);
 }
 
@@ -315,103 +276,42 @@ em {
     }
 }
 
+]] .. dynamicStyle
+
+local htmlStart = [[
+<html>
+<head>
+<style>
+    ]] .. style .. [[
 </style>
 </head>
 
 <header>
 	<div class="title">
-		<h1>Tier 4 ores</h1>
+		<h1>Storage monitor</h1>
 	</div>
 </header>
 
 <body>
 <div class="prime">
-    <div class="container">
-        <div class="container container__block--1">
-            <div class="item_container item_container_cobaltite">
-                ]] .. oreType[1] .. [[ :
-            </div>
-            <div class="item_container item_container_cobaltite">
-                ]] .. containerVolumeCobaltite .. [[
-            </div>
-            <div class="item_container item_container_cobaltite item_container_cobaltite--1">
-                <div class="progress-bar progress-bar-cobaltite">
-                    ]] .. percentCobaltite .. [[ %
-                </div>
-            </div>
-        </div>
-    </div>
+]]
 
-    <div class="container">
-        <div class="container container__block--2">
-            <div class="item_container item_container_cryolite">
-                ]] .. oreType[2] .. [[ :
-            </div>
-            <div class="item_container item_container_cryolite">
-                ]] .. containerVolumeCryolite .. [[
-            </div>
-            <div class="item_container item_container_cryolite item_container_cryolite--1">
-                <div class="progress-bar progress-bar-cryolite">
-                    ]] .. percentCryolite .. [[ %
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="container container__block--3">
-            <div class="item_container item_container_kolbeckite">
-                ]] .. oreType[3] .. [[ :
-            </div>
-            <div class="item_container item_container_kolbeckite">
-                ]] .. containerVolumeKolbeckite .. [[
-            </div>
-            <div class="item_container item_container_kolbeckite item_container_kolbeckite--1">
-                <div class="progress-bar progress-bar-kolbeckite">
-                    ]] .. percentKolbeckite .. [[ %
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container">
-        <div class="container container__block--4">
-            <div class="item_container item_container_gold_nuggets">
-                ]] .. oreType[4] .. [[ :
-            </div>
-            <div class="item_container item_container_gold_nuggets">
-                ]] .. containerVolumeGold_nuggets .. [[
-            </div>
-            <div class="item_container item_container_gold_nuggets item_container_gold_nuggets--1">
-                <div class="progress-bar progress-bar-gold_nuggets">
-                    ]] .. percentGold_nuggets .. [[ %
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container_message">
-        <div class="item_container">
-            <div class="infos_title">
-                ALERT
-            </div>
-            <div class="item_container_message">
-                <div class="infos_message">
-                    <div class="weak">
-                    Low stock of
-                    <em class="cobaltite">]] .. cobaltiteStockStatus .. [[</em>
-                    <em class="cryolite">]] .. cryoliteStockStatus .. [[</em>
-                    <em class="kolbeckite">]] .. kolbeckiteStockStatus .. [[</em>
-                    <em class="gold_nuggets">]] .. gold_nuggetsStockStatus .. [[</em>
-                    <br>
-                    Miners have to work !
-                </div>
-            </div>
-        </div>
-    </div>
+local htmlEnd = [[
 </div>
 </body>
 </html>
+]]
+
+local containers = ""
+
+for i, item in pairs(itemsData) do
+    containers = containers .. container(item, i)
+end
+
+local view = [[
+    ]] .. htmlStart .. [[
+    ]] .. containers .. [[
+    ]] .. htmlEnd .. [[
 ]]
 
 screen_T4_ores.setHTML(view)
