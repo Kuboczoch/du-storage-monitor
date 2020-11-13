@@ -24,52 +24,41 @@ local itemsData = {
     {
         label = itemLabel1,
         mass = itemMass1,
-        liters = maxInContainer1,
+        containerCapacity = maxInContainer1,
         density = itemDensity1
     },
     {
         label = itemLabel2,
         mass = itemMass2,
-        liters = maxInContainer2,
+        containerCapacity = maxInContainer2,
         density = itemDensity2
     },
     {
         label = itemLabel3,
         mass = itemMass3,
-        liters = maxInContainer3,
+        containerCapacity = maxInContainer3,
         density = itemDensity3
     },
     {
         label = itemLabel4,
         mass = itemMass4,
-        liters = maxInContainer4,
+        containerCapacity = maxInContainer4,
         density = itemDensity4
     }
 }
 
-function round(number, decimal)
-    local multiple = 10 ^ (decimal or 0)
-    return math.floor(number * multiple + 0.5) / multiple
-end
-
-function convertUnit(volume)
-    if volume <= 9999 then
-        return volume .. " L"
-    end
-    if volume >= 10000 and volume < 1000000 then
-        return math.floor(volume / 1000) .. " Kl"
-    end
-    if volume >= 1000000 then
-        return round(volume / 1000000, 2) .. " Ml"
-    end
-end
-
 function getBarStatus(item)
-    return math.ceil(item.mass / item.density) * _MAX_WIDTH_ / item.liters
+    local width = math.ceil(item.mass / item.density) * _MAX_WIDTH_ / item.containerCapacity
+
+    if width > _MAX_WIDTH_ then
+        return _MAX_WIDTH_
+    end
+
+    return width
 end
 
 function getItemStatus(item)
-    local percent = math.ceil((math.ceil(item.mass / item.density) / item.liters) * 100)
+    local percent = math.ceil(item.mass / item.density / item.containerCapacity * 100)
 
     if percent <= 25 then
         return [[
@@ -85,29 +74,16 @@ function getItemStatus(item)
         ]]
     end
 
+    if percent > 100 then
+        return [[
+            background: rgb(27,0,0);
+            background: linear-gradient(90deg, rgba(27,0,0,1) 0%, rgba(255,0,0,1) 25%, rgba(255,0,0,1) 100%)
+        ]]
+    end
+
     return [[
         background: rgb(5,27,0);
         background: linear-gradient(90deg, rgba(5,27,0,1) 0%, rgba(38,129,23,1) 25%, rgba(34,251,0,1) 100%);
-    ]]
-end
-
-function container(item, index)
-    return [[
-        <div class="container">
-            <div class="container container__block--1">
-                <div class="item_container item_container_]] .. index .. [[">
-                    ]] .. item.label .. [[ :
-                </div>
-                <div class="item_container item_container_]] .. index .. [[">
-                    ]] .. convertUnit(item.liters) .. [[
-                </div>
-                <div class="item_container item_container_]] .. index .. [[ item_container_]] .. index .. [[--1">
-                    <div class="progress-bar progress-bar-]] .. index .. [[">
-                        ]] .. math.ceil(((item.mass / item.density) / item.liters) * 100) .. [[ %
-                    </div>
-                </div>
-            </div>
-        </div>
     ]]
 end
 
@@ -115,7 +91,7 @@ local dynamicStyle = ""
 
 for i, item in pairs(itemsData) do
     dynamicStyle = dynamicStyle .. [[
-        .progress-bar-item]] .. i .. [[] {
+        .progress-bar-item]] .. i .. [[ {
             width: ]] .. getBarStatus(item) .. [[vw;
             ]] .. getItemStatus(item) .. [[
         }
@@ -302,10 +278,42 @@ local htmlEnd = [[
 </html>
 ]]
 
+function convertUnit(volume)
+    if volume <= 9999 then
+        return volume .. " L"
+    end
+    if volume >= 10000 and volume < 1000000 then
+        return math.floor(volume / 1000) .. " Kl"
+    end
+    if volume >= 1000000 then
+        return math.floor(volume / 10000) / 100 .. " Ml"
+    end
+end
+
+function container(item, index)
+    return [[
+        <div class="container">
+            <div class="container container__block--1">
+                <div class="item_container item_container_]] .. index .. [[">
+                    ]] .. item.label .. [[ :
+                </div>
+                <div class="item_container item_container_]] .. index .. [[">
+                    ]] .. convertUnit(item.containerCapacity) .. [[
+                </div>
+                <div class="item_container item_container_]] .. index .. [[ item_container_]] .. index .. [[--1">
+                    <div class="progress-bar progress-bar-]] .. index .. [[">
+                        ]] .. math.ceil(((item.mass / item.density) / item.containerCapacity) * 100) .. [[ %
+                    </div>
+                </div>
+            </div>
+        </div>
+    ]]
+end
+
 local containers = ""
 
 for i, item in pairs(itemsData) do
-    containers = containers .. container(item, i)
+    containers = containers .. container(item, "item" .. i)
 end
 
 local view = [[
@@ -314,4 +322,4 @@ local view = [[
     ]] .. htmlEnd .. [[
 ]]
 
-screen_T4_ores.setHTML(view)
+screen.setHTML(view)
