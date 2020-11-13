@@ -16,6 +16,26 @@ Modular version of storage monitor for 4 items, easy to implement, easy to devel
 
 </details>
 
+<details>
+    <summary>Parameters docs</summary>
+
+| Parameter | Description | Default value | Type |
+| ------------- | ------------- | ------------- | ------------- |
+| itemLabel1 | Display text | "itemLabel1" | String |
+| maxInContainer1 | Maximum volume in container | 0 | Number |
+| itemDensity1 | Density of content in container | 0 | Number |
+| itemLabel2 | Display text | "itemLabel2" | String |
+| maxInContainer2 | Maximum volume in container | 0 | Number |
+| itemDensity2 | Density of content in container | 0 | Number |
+| itemLabel3 | Display text | "itemLabel3" | String |
+| maxInContainer3 | Maximum volume in container | 0 | Number |
+| itemDensity3 | Density of content in container | 0 | Number |
+| itemLabel4 | Display text | "itemLabel4" | String |
+| maxInContainer4 | Maximum volume in container | 0 | Number |
+| itemDensity4 | Density of content in container | 0 | Number |
+
+</details>
+
 ### Preview
 
 <details>
